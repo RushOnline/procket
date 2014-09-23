@@ -200,9 +200,8 @@ promiscuous(Socket, Ifindex) ->
 %%-------------------------------------------------------------------------
 %% Bind a PF_PACKET socket to an interface.
 %%-------------------------------------------------------------------------
-bind(Socket, Dev, Proto) when is_binary(Dev) ->
-    {ok, Ifindex} = ifindex(Socket, Dev),
-    bind(Socket, Ifindex, Proto);
+bind(Socket, Dev, Proto) when is_list(Dev) ->
+    bind(Socket, ifindex(Socket, Dev), Proto);
 bind(Socket, Ifindex, Proto) when is_integer(Ifindex) ->
     Sockaddr_ll = <<
         ?PF_PACKET:16/native,   % sll_family: PF_PACKET
