@@ -64,6 +64,5 @@
 -endif.
 
 
--define(SOL_SOCKET, 1).
 -define(SO_REUSEADDR, 2).
 

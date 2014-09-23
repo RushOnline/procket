@@ -35,6 +35,7 @@
 %%
 -module(packet).
 -include("packet.hrl").
+-include("procket.hrl").
 -export([
         socket/0, socket/1,
         iflist/0,
@@ -46,7 +47,7 @@
         ipv4address/2,
         macaddress/2,
         promiscuous/2,
-        bind/2,
+        bind/3,
         bindtodevice/2,
         filter/2, unfilter/1, unfilter/2,
         send/3
@@ -59,12 +60,8 @@
 socket() ->
     socket(?ETH_P_IP).
 socket(Protocol) when is_integer(Protocol) ->
-    procket:open(0, [
-            {protocol, procket:ntohs(Protocol)},
-            {type, raw},
-            {family, packet}
-        ]).
-
+    <<P:16>> = <<Protocol:16/native>>,
+    procket:socket(?PF_PACKET, ?SOCK_RAW, P).
 
 %%-------------------------------------------------------------------------
 %% Lookup the MAC address of an IP
@@ -203,10 +200,13 @@ promiscuous(Socket, Ifindex) ->
 %%-------------------------------------------------------------------------
 %% Bind a PF_PACKET socket to an interface.
 %%-------------------------------------------------------------------------
-bind(Socket, Ifindex) ->
+bind(Socket, Dev, Proto) when is_binary(Dev) ->
+    {ok, Ifindex} = ifindex(Socket, Dev),
+    bind(Socket, Ifindex, Proto);
+bind(Socket, Ifindex, Proto) when is_integer(Ifindex) ->
     Sockaddr_ll = <<
         ?PF_PACKET:16/native,   % sll_family: PF_PACKET
-        0:16,                   % sll_protocol: Physical layer protocol
+        Proto:16,               % sll_protocol: Physical layer protocol
         Ifindex:32/native,      % sll_ifindex: Interface number
         0:16,                   % sll_hatype: Header type
         0:8,                    % sll_pkttype: Packet type
